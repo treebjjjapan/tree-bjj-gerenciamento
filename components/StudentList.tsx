@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { 
-  Plus, Search, Phone, Calendar, Camera, X, RefreshCw, MapPin, User as UserIcon
+  Plus, Search, Phone, Calendar, Camera, X, RefreshCw, MapPin, User as UserIcon, Mail, Instagram
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { StudentStatus, BeltColor } from '../types';
@@ -18,6 +18,7 @@ const StudentList: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     responsibleName: '',
+    socialMedia: '',
     email: '',
     phone: '',
     cpf: '',
@@ -84,7 +85,7 @@ const StudentList: React.FC = () => {
     
     setShowAddModal(false);
     setFormData({
-      name: '', responsibleName: '', email: '', phone: '', cpf: '', birthDate: '', address: '', planId: plans[0]?.id || '', belt: BeltColor.WHITE, stripes: 0, status: StudentStatus.ACTIVE, photoUrl: ''
+      name: '', responsibleName: '', socialMedia: '', email: '', phone: '', cpf: '', birthDate: '', address: '', planId: plans[0]?.id || '', belt: BeltColor.WHITE, stripes: 0, status: StudentStatus.ACTIVE, photoUrl: ''
     });
   };
 
@@ -95,7 +96,7 @@ const StudentList: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
-            placeholder="Buscar por nome..."
+            placeholder="Buscar por nome ou e-mail..."
             className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -128,24 +129,40 @@ const StudentList: React.FC = () => {
               </div>
               <button onClick={() => setStudents(prev => prev.filter(s => s.id !== student.id))} className="text-slate-200 hover:text-rose-500"><X size={16}/></button>
             </div>
-            <div className="grid grid-cols-2 gap-4 py-4 border-t border-slate-50">
-              <div className="flex items-center space-x-2">
-                <Phone size={14} className="text-slate-400" />
-                <span className="text-xs text-slate-600 truncate">{student.phone}</span>
+            
+            <div className="grid grid-cols-1 gap-2 py-4 border-t border-slate-50">
+              <div className="flex items-center space-x-3">
+                <Phone size={14} className="text-slate-400 shrink-0" />
+                <span className="text-xs text-slate-600 font-medium">{student.phone}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Calendar size={14} className="text-slate-400" />
-                <span className="text-xs text-slate-600 truncate">
-                  {plans.find(p => p.id === student.planId)?.name || 'S/ Plano'}
-                </span>
-              </div>
+              {student.email && (
+                <div className="flex items-center space-x-3">
+                  <Mail size={14} className="text-slate-400 shrink-0" />
+                  <span className="text-xs text-slate-600 truncate">{student.email}</span>
+                </div>
+              )}
+              {student.socialMedia && (
+                <div className="flex items-center space-x-3">
+                  <Instagram size={14} className="text-slate-400 shrink-0" />
+                  <span className="text-xs text-slate-600 truncate">{student.socialMedia}</span>
+                </div>
+              )}
             </div>
-            {student.responsibleName && (
-              <div className="mt-2 pt-2 border-t border-slate-50">
-                <p className="text-[10px] font-black text-slate-400 uppercase">Responsável</p>
-                <p className="text-xs font-bold text-slate-700">{student.responsibleName}</p>
-              </div>
-            )}
+
+            <div className="pt-2 border-t border-slate-50 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase">Plano</p>
+                  <p className="text-[11px] font-bold text-slate-700">
+                    {plans.find(p => p.id === student.planId)?.name || 'S/ Plano'}
+                  </p>
+                </div>
+                {student.responsibleName && (
+                  <div className="text-right">
+                    <p className="text-[9px] font-black text-slate-400 uppercase">Responsável</p>
+                    <p className="text-[11px] font-bold text-slate-700">{student.responsibleName}</p>
+                  </div>
+                )}
+            </div>
           </div>
         ))}
         {filteredStudents.length === 0 && (
@@ -161,7 +178,7 @@ const StudentList: React.FC = () => {
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
           <div className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-slate-800">Nova Matrícula</h2>
+              <h2 className="text-2xl font-black text-slate-800">Nova Matrícula (Tree BJJ Japan)</h2>
               <button onClick={() => setShowAddModal(false)} className="p-2 bg-slate-100 rounded-xl text-slate-400"><X size={24} /></button>
             </div>
 
@@ -185,45 +202,53 @@ const StudentList: React.FC = () => {
                 <canvas ref={canvasRef} className="hidden" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-1">Dados do Aluno</h4>
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-1">Dados de Contato</h4>
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nome Completo</label>
                     <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone / WhatsApp</label>
-                    <input required type="tel" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone (Japão)</label>
+                    <input required type="tel" placeholder="090-0000-0000" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Responsável (Pai/Mãe)</label>
-                    <input type="text" placeholder="Caso seja menor de idade" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.responsibleName} onChange={e => setFormData({...formData, responsibleName: e.target.value})} />
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">E-mail</label>
+                    <input type="email" placeholder="exemplo@gmail.com" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Instagram / Facebook</label>
+                    <input type="text" placeholder="@usuario" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.socialMedia} onChange={e => setFormData({...formData, socialMedia: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-1">Endereço e Plano</h4>
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-1">Perfil e Plano</h4>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Endereço</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Responsável / Pai / Mãe</label>
+                    <input type="text" placeholder="Nome do responsável" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.responsibleName} onChange={e => setFormData({...formData, responsibleName: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Endereço no Japão</label>
                     <input type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Plano</label>
-                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.planId} onChange={e => setFormData({...formData, planId: e.target.value})}>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.planId} onChange={e => setFormData({...formData, planId: e.target.value})}>
                         {plans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                       </select>
                     </div>
                     <div>
                       <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Faixa</label>
-                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.belt} onChange={e => setFormData({...formData, belt: e.target.value as BeltColor})}>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.belt} onChange={e => setFormData({...formData, belt: e.target.value as BeltColor})}>
                         {Object.values(BeltColor).map(b => <option key={b} value={b}>{b}</option>)}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nascimento</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Data de Nascimento</label>
                     <input type="date" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} />
                   </div>
                 </div>

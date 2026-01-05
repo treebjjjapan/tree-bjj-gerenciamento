@@ -60,7 +60,8 @@ export interface User {
 export interface Student {
   id: string;
   name: string;
-  responsibleName?: string; // Novo campo
+  responsibleName?: string;
+  socialMedia?: string; // Novo campo
   birthDate: string;
   cpf: string;
   phone: string;

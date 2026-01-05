@@ -17,6 +17,7 @@ interface AppContextType {
   financials: FinancialRecord[];
   setFinancials: React.Dispatch<React.SetStateAction<FinancialRecord[]>>;
   addFinancial: (record: Omit<FinancialRecord, 'id'>) => void;
+  deleteFinancial: (id: string) => void;
   products: Product[];
   notifications: string[];
   plans: Plan[];
@@ -30,10 +31,10 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const DEFAULT_PLANS: Plan[] = [
-  { id: 'p1', name: 'Mensal', price: 250, durationMonths: 1 },
-  { id: 'p2', name: 'Trimestral', price: 650, durationMonths: 3 },
-  { id: 'p3', name: 'Semestral', price: 1200, durationMonths: 6 },
-  { id: 'p4', name: 'Anual', price: 2200, durationMonths: 12 },
+  { id: 'p1', name: 'Mensal', price: 10000, durationMonths: 1 },
+  { id: 'p2', name: 'Trimestral', price: 27000, durationMonths: 3 },
+  { id: 'p3', name: 'Semestral', price: 50000, durationMonths: 6 },
+  { id: 'p4', name: 'Anual', price: 90000, durationMonths: 12 },
 ];
 
 const DEFAULT_GRADUATION_RULES: GraduationRule[] = [
@@ -126,6 +127,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFinancials(prev => [newRecord, ...prev]);
   }, []);
 
+  const deleteFinancial = useCallback((id: string) => {
+    setFinancials(prev => prev.filter(f => f.id !== id));
+  }, []);
+
   useEffect(() => {
     const newAlerts: string[] = [];
     students.forEach(s => {
@@ -140,7 +145,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       currentUser, setCurrentUser, students, setStudents, addStudent,
-      attendance, addAttendance, financials, setFinancials, addFinancial, products,
+      attendance, addAttendance, financials, setFinancials, addFinancial, deleteFinancial, products,
       notifications, plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules
     }}>
       {children}
