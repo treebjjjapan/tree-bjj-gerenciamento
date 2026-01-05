@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Tree Brazilian Jiu Jitsu Management",
+  "description": "A comprehensive mobile-first management system for Tree Brazilian Jiu Jitsu academy, featuring student tracking, belt graduation history, attendance control, financial dashboards, and a merchandising store.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
