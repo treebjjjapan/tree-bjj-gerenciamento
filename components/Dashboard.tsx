@@ -5,8 +5,6 @@ import {
   TrendingUp, 
   DollarSign, 
   CalendarCheck,
-  ArrowUpRight,
-  ArrowDownRight,
   Plus
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -16,7 +14,6 @@ import { PaymentStatus } from '../types';
 const Dashboard: React.FC = () => {
   const { students, financials, attendance } = useAppContext();
 
-  const totalStudents = students.length;
   const activeStudents = students.filter(s => s.status === 'Ativo').length;
   
   const revenue = financials
@@ -31,8 +28,8 @@ const Dashboard: React.FC = () => {
 
   const stats = [
     { label: 'Alunos Ativos', value: activeStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Receita Total', value: `R$ ${revenue.toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Lucro Líquido', value: `R$ ${profit.toLocaleString()}`, icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Receita Total', value: `¥ ${revenue.toLocaleString('ja-JP')}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Lucro Líquido', value: `¥ ${profit.toLocaleString('ja-JP')}`, icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50' },
     { label: 'Check-ins (Hoje)', value: attendance.filter(a => a.date === new Date().toISOString().split('T')[0]).length, icon: CalendarCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
@@ -48,7 +45,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
@@ -66,9 +62,8 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Main Chart */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <h3 className="font-bold text-slate-800 mb-6">Visão Financeira</h3>
+          <h3 className="font-bold text-slate-800 mb-6">Visão Financeira (Yen)</h3>
           <div className="h-72 w-full flex items-center justify-center">
             {financials.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -82,7 +77,10 @@ const Dashboard: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                  <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
+                  <Tooltip 
+                    formatter={(value: number) => `¥ ${value.toLocaleString('ja-JP')}`}
+                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} 
+                  />
                   <Area type="monotone" dataKey="valor" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorVal)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -95,7 +93,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Activity */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
           <h3 className="font-bold text-slate-800 mb-6">Check-ins Recentes</h3>
           <div className="space-y-4">
@@ -127,12 +124,8 @@ const Dashboard: React.FC = () => {
       {students.length === 0 && (
         <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden">
           <div className="relative z-10">
-            <h3 className="text-2xl font-black mb-2">Bem-vindo à Tree BJJ!</h3>
-            <p className="text-slate-400 max-w-lg mb-6">Seu sistema está pronto para uso. Comece cadastrando seu primeiro aluno para ver a mágica acontecer.</p>
-            <button className="px-6 py-3 bg-emerald-500 rounded-2xl font-black text-sm flex items-center space-x-2 shadow-xl shadow-emerald-500/20">
-              <Plus size={18} />
-              <span>Adicionar Primeiro Aluno</span>
-            </button>
+            <h3 className="text-2xl font-black mb-2">Bem-vindo à Tree BJJ Japan!</h3>
+            <p className="text-slate-400 max-w-lg mb-6">Seu sistema está pronto para uso em Yens. Comece cadastrando seu primeiro aluno para ver a mágica acontecer.</p>
           </div>
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
         </div>

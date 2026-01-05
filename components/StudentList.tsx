@@ -1,7 +1,7 @@
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
-  Plus, Search, Filter, Phone, Calendar, ChevronRight, Camera, X, RefreshCw
+  Plus, Search, Phone, Calendar, Camera, X, RefreshCw
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { StudentStatus, BeltColor, Student } from '../types';
@@ -94,7 +94,7 @@ const StudentList: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
-            placeholder="Buscar por nome ou e-mail..."
+            placeholder="Buscar por nome..."
             className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 transition-all text-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -105,7 +105,7 @@ const StudentList: React.FC = () => {
           className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-900/20 hover:bg-emerald-700 transition-all text-sm whitespace-nowrap"
         >
           <Plus size={18} />
-          <span>Novo Aluno</span>
+          <span>Matricular Aluno</span>
         </button>
       </div>
 
@@ -122,11 +122,10 @@ const StudentList: React.FC = () => {
                   <h3 className="font-bold text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors">{student.name}</h3>
                   <div className="flex items-center mt-1 space-x-2">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${BELT_COLORS[student.belt]}`}>{student.belt}</span>
-                    <span className="text-slate-400 text-[10px] font-medium">• {student.stripes} Graus</span>
                   </div>
                 </div>
               </div>
-              <button onClick={() => setStudents(prev => prev.filter(s => s.id !== student.id))} className="p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={18} /></button>
+              <button onClick={() => setStudents(prev => prev.filter(s => s.id !== student.id))} className="text-slate-200 hover:text-rose-500"><X size={16}/></button>
             </div>
             <div className="grid grid-cols-2 gap-4 py-4 border-t border-slate-50">
               <div className="flex items-center space-x-2">
@@ -135,7 +134,9 @@ const StudentList: React.FC = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar size={14} className="text-slate-400" />
-                <span className="text-xs text-slate-600 truncate">{plans.find(p => p.id === student.planId)?.name || 'N/A'}</span>
+                <span className="text-xs text-slate-600 truncate">
+                  {plans.find(p => p.id === student.planId)?.name || 'S/ Plano'}
+                </span>
               </div>
             </div>
           </div>
@@ -152,21 +153,20 @@ const StudentList: React.FC = () => {
             </div>
 
             <form className="space-y-4" onSubmit={handleSubmit}>
-              {/* Foto Section */}
               <div className="flex flex-col items-center justify-center mb-6">
                 {isCameraActive ? (
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-emerald-500 bg-black shadow-xl">
+                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-emerald-500 bg-black">
                     <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
                     <button type="button" onClick={capturePhoto} className="absolute bottom-4 left-1/2 -translate-x-1/2 p-3 bg-emerald-500 text-white rounded-full shadow-lg"><Camera size={20}/></button>
                   </div>
                 ) : (
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-slate-100 bg-slate-50 shadow-inner flex items-center justify-center">
+                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-slate-100 bg-slate-50 flex items-center justify-center">
                     {formData.photoUrl ? (
                       <img src={formData.photoUrl} className="w-full h-full object-cover" />
                     ) : (
                       <Camera size={40} className="text-slate-300" />
                     )}
-                    <button type="button" onClick={startCamera} className="absolute bottom-0 right-0 p-3 bg-slate-800 text-white rounded-full shadow-lg hover:bg-emerald-600 transition-all"><RefreshCw size={16} /></button>
+                    <button type="button" onClick={startCamera} className="absolute bottom-0 right-0 p-3 bg-slate-800 text-white rounded-full"><RefreshCw size={16} /></button>
                   </div>
                 )}
                 <canvas ref={canvasRef} className="hidden" />
@@ -178,16 +178,16 @@ const StudentList: React.FC = () => {
                   <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">WhatsApp</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase">Telefone</label>
                   <input required type="tel" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Plano de Mensalidade</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase">Plano</label>
                   <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.planId} onChange={e => setFormData({...formData, planId: e.target.value})}>
-                    {plans.map(p => <option key={p.id} value={p.id}>{p.name} - R$ {p.price}</option>)}
+                    {plans.map(p => <option key={p.id} value={p.id}>{p.name} - ¥ {p.price.toLocaleString('ja-JP')}</option>)}
                   </select>
                 </div>
                 <div>
@@ -198,7 +198,7 @@ const StudentList: React.FC = () => {
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-900/20 mt-4 hover:bg-emerald-700 transition-all">Finalizar Cadastro</button>
+              <button type="submit" className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-900/20 mt-4 hover:bg-emerald-700 transition-all">Salvar Aluno</button>
             </form>
           </div>
         </div>

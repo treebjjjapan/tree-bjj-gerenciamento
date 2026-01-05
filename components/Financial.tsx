@@ -6,7 +6,6 @@ import {
   TrendingDown, 
   Plus, 
   Filter,
-  FileText,
   X
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
@@ -16,7 +15,6 @@ const Financial: React.FC = () => {
   const { financials, addFinancial, students } = useAppContext();
   const [showModal, setShowModal] = useState(false);
   
-  // Form State
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
@@ -52,7 +50,7 @@ const Financial: React.FC = () => {
           <p className="text-sm font-bold text-slate-400 uppercase mb-1">Saldo Total</p>
           <div className="flex items-center justify-between">
             <h2 className={`text-3xl font-black ${balance >= 0 ? 'text-slate-800' : 'text-rose-500'}`}>
-              R$ {balance.toLocaleString()}
+              ¥ {balance.toLocaleString('ja-JP')}
             </h2>
             <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600">
               <DollarSign size={24} />
@@ -62,7 +60,7 @@ const Financial: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <p className="text-sm font-bold text-slate-400 uppercase mb-1">Entradas</p>
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-black text-emerald-600">R$ {income.toLocaleString()}</h2>
+            <h2 className="text-3xl font-black text-emerald-600">¥ {income.toLocaleString('ja-JP')}</h2>
             <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600">
               <TrendingUp size={24} />
             </div>
@@ -71,7 +69,7 @@ const Financial: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <p className="text-sm font-bold text-slate-400 uppercase mb-1">Saídas</p>
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-black text-rose-500">R$ {expense.toLocaleString()}</h2>
+            <h2 className="text-3xl font-black text-rose-500">¥ {expense.toLocaleString('ja-JP')}</h2>
             <div className="bg-rose-50 p-2 rounded-xl text-rose-500">
               <TrendingDown size={24} />
             </div>
@@ -83,9 +81,6 @@ const Financial: React.FC = () => {
         <div className="p-6 border-b border-slate-50 flex items-center justify-between">
           <h3 className="font-bold text-slate-800">Transações</h3>
           <div className="flex items-center space-x-2">
-            <button className="p-2 bg-slate-50 rounded-xl text-slate-600 hover:bg-slate-100">
-              <Filter size={18} />
-            </button>
             <button 
               onClick={() => setShowModal(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm"
@@ -102,7 +97,6 @@ const Financial: React.FC = () => {
               <tr className="bg-slate-50/50">
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Data</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Descrição</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Categoria</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase text-right">Valor</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase">Status</th>
               </tr>
@@ -113,12 +107,10 @@ const Financial: React.FC = () => {
                   <td className="px-6 py-4 text-xs font-medium text-slate-500">{f.date}</td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-bold text-slate-800">{f.description}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                     <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">{f.category}</span>
+                    <span className="text-[10px] font-medium text-slate-400 uppercase">{f.category}</span>
                   </td>
                   <td className={`px-6 py-4 text-sm font-black text-right ${f.type === 'INCOME' ? 'text-emerald-600' : 'text-slate-800'}`}>
-                    {f.type === 'INCOME' ? '+' : '-'} R$ {f.amount.toLocaleString()}
+                    {f.type === 'INCOME' ? '+' : '-'} ¥ {f.amount.toLocaleString('ja-JP')}
                   </td>
                   <td className="px-6 py-4">
                     <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase ${
@@ -140,7 +132,7 @@ const Financial: React.FC = () => {
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
           <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-black text-slate-800">Nova Transação</h2>
+              <h2 className="text-2xl font-black text-slate-800">Novo Lançamento</h2>
               <button onClick={() => setShowModal(false)} className="p-2 bg-slate-100 rounded-xl text-slate-400">
                 <X size={24} />
               </button>
@@ -171,20 +163,19 @@ const Financial: React.FC = () => {
                     required
                     type="text" 
                     className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" 
-                    placeholder="Ex: Mensalidade João Silva" 
+                    placeholder="Ex: Mensalidade Tanaka-san" 
                     value={formData.description}
                     onChange={e => setFormData({...formData, description: e.target.value})}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Valor (R$)</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Valor (¥)</label>
                     <input 
                       required
                       type="number" 
-                      step="0.01"
                       className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" 
-                      placeholder="0,00" 
+                      placeholder="0" 
                       value={formData.amount}
                       onChange={e => setFormData({...formData, amount: e.target.value})}
                     />
@@ -206,23 +197,10 @@ const Financial: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                {formData.type === 'INCOME' && (
-                   <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Vincular Aluno (Opcional)</label>
-                    <select 
-                      className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500"
-                      value={formData.studentId}
-                      onChange={e => setFormData({...formData, studentId: e.target.value})}
-                    >
-                      <option value="">Não vincular</option>
-                      {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                )}
               </div>
 
               <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-black/20 mt-4 hover:bg-emerald-600 transition-all">
-                Salvar Lançamento
+                Salvar em Yen
               </button>
             </form>
           </div>
