@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
 import { 
-  Plus, Trash2, AlertTriangle, RefreshCcw, Clock
+  Plus, Trash2, AlertTriangle, RefreshCcw, Clock, DollarSign
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { Plan, ClassSchedule, BeltColor } from '../types';
 
 const Settings: React.FC = () => {
-  const { plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules } = useAppContext();
+  const { plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules, setFinancials } = useAppContext();
   const [activeTab, setActiveTab] = useState<'plans' | 'schedules' | 'grad' | 'system'>('plans');
 
   const addPlan = () => {
@@ -32,6 +32,13 @@ const Settings: React.FC = () => {
     if (window.confirm("ATENÇÃO: Isso apagará TODOS os dados permanentemente. Deseja continuar?")) {
       localStorage.clear();
       window.location.reload();
+    }
+  };
+
+  const resetFinancials = () => {
+    if (window.confirm("Deseja zerar todo o histórico financeiro (Entradas e Saídas)? Os alunos e presenças serão mantidos.")) {
+      setFinancials([]);
+      alert("Financeiro zerado com sucesso!");
     }
   };
 
@@ -135,21 +142,42 @@ const Settings: React.FC = () => {
         )}
 
         {activeTab === 'system' && (
-          <div className="bg-rose-50 border border-rose-100 p-6 rounded-3xl">
-            <div className="flex items-start space-x-4">
-              <div className="p-3 bg-rose-100 text-rose-600 rounded-2xl">
-                <AlertTriangle size={24} />
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-100 p-6 rounded-3xl">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl">
+                  <DollarSign size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-lg font-black text-amber-900 leading-tight">Limpar Financeiro</h4>
+                  <p className="text-amber-700 text-sm mt-1">Apaga apenas o histórico de transações. Alunos e horários não serão afetados.</p>
+                  <button 
+                    onClick={resetFinancials}
+                    className="mt-6 flex items-center space-x-2 px-6 py-3 bg-amber-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-amber-900/20"
+                  >
+                    <RefreshCcw size={18} />
+                    <span>Zerar Apenas Financeiro</span>
+                  </button>
+                </div>
               </div>
-              <div className="flex-1">
-                <h4 className="text-lg font-black text-rose-900 leading-tight">Limpeza Total</h4>
-                <p className="text-rose-700 text-sm mt-1">Apaga todos os dados (Alunos, Transações e Horários) deste dispositivo.</p>
-                <button 
-                  onClick={resetSystem}
-                  className="mt-6 flex items-center space-x-2 px-6 py-3 bg-rose-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-rose-900/20"
-                >
-                  <RefreshCcw size={18} />
-                  <span>Zerar Tudo e Recomeçar</span>
-                </button>
+            </div>
+
+            <div className="bg-rose-50 border border-rose-100 p-6 rounded-3xl">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-rose-100 text-rose-600 rounded-2xl">
+                  <AlertTriangle size={24} />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-lg font-black text-rose-900 leading-tight">Limpeza Total</h4>
+                  <p className="text-rose-700 text-sm mt-1">Apaga absolutamente todos os dados deste dispositivo.</p>
+                  <button 
+                    onClick={resetSystem}
+                    className="mt-6 flex items-center space-x-2 px-6 py-3 bg-rose-600 text-white rounded-2xl font-black text-sm shadow-lg shadow-rose-900/20"
+                  >
+                    <RefreshCcw size={18} />
+                    <span>Zerar Tudo e Recomeçar</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

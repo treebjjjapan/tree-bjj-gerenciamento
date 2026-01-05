@@ -15,6 +15,7 @@ interface AppContextType {
   attendance: AttendanceRecord[];
   addAttendance: (studentId: string, classId?: string) => void;
   financials: FinancialRecord[];
+  setFinancials: React.Dispatch<React.SetStateAction<FinancialRecord[]>>;
   addFinancial: (record: Omit<FinancialRecord, 'id'>) => void;
   products: Product[];
   notifications: string[];
@@ -139,7 +140,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       currentUser, setCurrentUser, students, setStudents, addStudent,
-      attendance, addAttendance, financials, addFinancial, products,
+      attendance, addAttendance, financials, setFinancials, addFinancial, products,
       notifications, plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules
     }}>
       {children}
