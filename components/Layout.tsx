@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Users, LayoutDashboard, CalendarCheck, DollarSign, ShoppingBag, 
-  LogOut, Award, Settings
+  LogOut, Award, Settings, Menu
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { UserRole } from '../types';
@@ -27,12 +27,11 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) =
   const { currentUser, setCurrentUser } = useAppContext();
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
+    { id: 'dashboard', label: 'Início', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
     { id: 'students', label: 'Alunos', icon: Users, roles: [UserRole.ADMIN] },
     { id: 'attendance', label: 'Presença', icon: CalendarCheck, roles: [UserRole.ADMIN] },
     { id: 'financial', label: 'Financeiro', icon: DollarSign, roles: [UserRole.ADMIN] },
     { id: 'belt', label: 'Graduação', icon: Award, roles: [UserRole.ADMIN] },
-    { id: 'store', label: 'Loja', icon: ShoppingBag, roles: [UserRole.ADMIN, UserRole.STUDENT] },
     { id: 'settings', label: 'Ajustes', icon: Settings, roles: [UserRole.ADMIN] },
   ];
 
@@ -40,12 +39,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) =
 
   const handleNav = (id: string) => {
     onViewChange(id);
+    window.scrollTo(0, 0);
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 overflow-hidden">
+    <div className="min-h-screen flex flex-col md:flex-row bg-slate-50 overflow-x-hidden">
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white shrink-0">
+      <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white shrink-0 h-screen sticky top-0">
         <div className="p-6 flex items-center space-x-3">
           <Logo className="w-12 h-12 shadow-lg shadow-black/20" />
           <div className="flex flex-col">
@@ -55,7 +55,11 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) =
         </div>
         <nav className="flex-1 px-4 space-y-1">
           {filteredItems.map(item => (
-            <button key={item.id} onClick={() => handleNav(item.id)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeView === item.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}>
+            <button 
+              key={item.id} 
+              onClick={() => handleNav(item.id)} 
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeView === item.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+            >
               <item.icon size={20} />
               <span className="font-medium">{item.label}</span>
             </button>
@@ -69,9 +73,26 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) =
         </div>
       </aside>
 
+      {/* Header Mobile */}
+      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 text-white flex items-center justify-between px-4 z-[50] shadow-xl">
+        <div className="flex items-center space-x-2">
+          <Logo className="w-8 h-8" />
+          <span className="font-black text-sm tracking-tighter">TREE BJJ</span>
+        </div>
+        <div className="flex items-center space-x-3">
+          <button 
+            onClick={() => setCurrentUser(null)} 
+            className="p-2 text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+          >
+            <LogOut size={20} />
+          </button>
+        </div>
+      </header>
+
       {/* Main Content */}
-      <main className="flex-1 relative overflow-y-auto p-4 md:p-8 h-screen">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <main className="flex-1 relative p-4 md:p-8 pt-20 md:pt-8 pb-24 md:pb-8">
+        <div className="max-w-7xl mx-auto">
+          {/* Título da View (Desktop Only) */}
           <div className="hidden md:flex items-center justify-between mb-8">
             <h1 className="text-2xl font-black text-slate-800">
               {menuItems.find(i => i.id === activeView)?.label || 'Bem-vindo'}
@@ -86,9 +107,38 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) =
               </div>
             </div>
           </div>
+          
+          {/* Conteúdo Dinâmico */}
           {children}
         </div>
       </main>
+
+      {/* Bottom Navigation Mobile */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 flex items-center justify-around px-2 z-[50] pb-safe">
+        {filteredItems.slice(0, 5).map(item => (
+          <button 
+            key={item.id} 
+            onClick={() => handleNav(item.id)} 
+            className={`flex flex-col items-center justify-center flex-1 h-full space-y-1 transition-all ${activeView === item.id ? 'text-emerald-600' : 'text-slate-400'}`}
+          >
+            <item.icon size={20} className={activeView === item.id ? 'scale-110' : ''} />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">{item.label}</span>
+            {activeView === item.id && (
+              <div className="w-1 h-1 bg-emerald-600 rounded-full"></div>
+            )}
+          </button>
+        ))}
+        {/* Botão de Ajustes separado se houver muitos itens */}
+        {filteredItems.length > 5 && (
+          <button 
+            onClick={() => handleNav('settings')} 
+            className={`flex flex-col items-center justify-center flex-1 h-full space-y-1 transition-all ${activeView === 'settings' ? 'text-emerald-600' : 'text-slate-400'}`}
+          >
+            <Settings size={20} />
+            <span className="text-[9px] font-bold uppercase tracking-tighter">Ajustes</span>
+          </button>
+        )}
+      </nav>
     </div>
   );
 };

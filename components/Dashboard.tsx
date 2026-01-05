@@ -44,18 +44,18 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-4">
-              <div className={`${stat.bg} ${stat.color} p-3 rounded-2xl`}>
-                <stat.icon size={24} />
+          <div key={idx} className="bg-white p-4 md:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between overflow-hidden">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <div className={`${stat.bg} ${stat.color} p-2 md:p-3 rounded-xl md:rounded-2xl`}>
+                <stat.icon size={20} className="md:w-6 md:h-6" />
               </div>
             </div>
             <div>
-              <p className="text-slate-500 text-sm font-medium">{stat.label}</p>
-              <h3 className="text-2xl font-bold text-slate-800 mt-1">{stat.value}</h3>
+              <p className="text-slate-500 text-[10px] md:text-sm font-medium leading-none">{stat.label}</p>
+              <h3 className="text-sm md:text-2xl font-bold text-slate-800 mt-1 truncate">{stat.value}</h3>
             </div>
           </div>
         ))}
@@ -63,8 +63,8 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <h3 className="font-bold text-slate-800 mb-6">Visão Financeira (Yen)</h3>
-          <div className="h-72 w-full flex items-center justify-center">
+          <h3 className="font-black text-slate-800 mb-6 text-sm md:text-base uppercase tracking-widest">Fluxo de Caixa</h3>
+          <div className="h-64 md:h-72 w-full flex items-center justify-center">
             {financials.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
@@ -75,8 +75,8 @@ const Dashboard: React.FC = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} width={40} />
                   <Tooltip 
                     formatter={(value: number) => `¥ ${value.toLocaleString('ja-JP')}`}
                     contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} 
@@ -87,49 +87,39 @@ const Dashboard: React.FC = () => {
             ) : (
               <div className="text-center text-slate-400">
                 <TrendingUp size={48} className="mx-auto mb-2 opacity-10" />
-                <p className="text-sm">Aguardando dados financeiros...</p>
+                <p className="text-sm">Aguardando dados...</p>
               </div>
             )}
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <h3 className="font-bold text-slate-800 mb-6">Check-ins Recentes</h3>
+          <h3 className="font-black text-slate-800 mb-6 text-sm md:text-base uppercase tracking-widest">Atividade Recente</h3>
           <div className="space-y-4">
             {attendance.length > 0 ? attendance.slice(0, 5).map((a, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors">
+              <div key={idx} className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
                 <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-600">
                     {a.studentName.charAt(0)}
                   </div>
-                  <div>
-                    <p className="font-semibold text-slate-800 text-sm">{a.studentName}</p>
-                    <p className="text-xs text-slate-500">{a.date} às {a.time}</p>
+                  <div className="min-w-0">
+                    <p className="font-black text-slate-800 text-xs md:text-sm truncate">{a.studentName}</p>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter">{a.time} • OSS!</p>
                   </div>
                 </div>
-                <div className="bg-emerald-100 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">
+                <div className="bg-emerald-100 text-emerald-700 text-[9px] font-black px-2 py-1 rounded-lg uppercase">
                   {a.method}
                 </div>
               </div>
             )) : (
               <div className="flex flex-col items-center justify-center py-10 text-slate-400">
                 <CalendarCheck size={48} className="mb-2 opacity-10" />
-                <p className="text-sm italic">Nenhum check-in hoje.</p>
+                <p className="text-xs font-medium italic">Nenhum check-in hoje.</p>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      {students.length === 0 && (
-        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <h3 className="text-2xl font-black mb-2">Bem-vindo à Tree BJJ Japan!</h3>
-            <p className="text-slate-400 max-w-lg mb-6">Seu sistema está pronto para uso em Yens. Comece cadastrando seu primeiro aluno para ver a mágica acontecer.</p>
-          </div>
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
-        </div>
-      )}
     </div>
   );
 };
