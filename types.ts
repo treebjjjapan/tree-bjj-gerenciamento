@@ -60,6 +60,7 @@ export interface User {
 export interface Student {
   id: string;
   name: string;
+  responsibleName?: string; // Novo campo
   birthDate: string;
   cpf: string;
   phone: string;
@@ -82,7 +83,7 @@ export interface AttendanceRecord {
   date: string;
   time: string;
   classId?: string;
-  method: 'MANUAL' | 'QRCODE';
+  method: 'MANUAL' | 'QRCODE' | 'TOTEM';
 }
 
 export interface FinancialRecord {

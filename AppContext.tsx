@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { 
   Student, AttendanceRecord, FinancialRecord, Product, User, UserRole, 
-  StudentStatus, BeltColor, PaymentStatus, Plan, ClassSchedule, GraduationRule 
+  StudentStatus, BeltColor, Plan, ClassSchedule, GraduationRule 
 } from './types';
 import { INITIAL_STUDENTS, INITIAL_FINANCIAL, INITIAL_PRODUCTS } from './constants';
 
@@ -113,7 +113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       classId,
-      method: 'MANUAL'
+      method: 'TOTEM'
     };
 
     setAttendance(prev => [newRecord, ...prev]);

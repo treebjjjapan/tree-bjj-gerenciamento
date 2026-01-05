@@ -1,10 +1,10 @@
 
 import React, { useState, useRef } from 'react';
 import { 
-  Plus, Search, Phone, Calendar, Camera, X, RefreshCw
+  Plus, Search, Phone, Calendar, Camera, X, RefreshCw, MapPin, User as UserIcon
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
-import { StudentStatus, BeltColor, Student } from '../types';
+import { StudentStatus, BeltColor } from '../types';
 import { BELT_COLORS } from '../constants.tsx';
 
 const StudentList: React.FC = () => {
@@ -17,6 +17,7 @@ const StudentList: React.FC = () => {
   
   const [formData, setFormData] = useState({
     name: '',
+    responsibleName: '',
     email: '',
     phone: '',
     cpf: '',
@@ -83,7 +84,7 @@ const StudentList: React.FC = () => {
     
     setShowAddModal(false);
     setFormData({
-      name: '', email: '', phone: '', cpf: '', birthDate: '', address: '', planId: plans[0]?.id || '', belt: BeltColor.WHITE, stripes: 0, status: StudentStatus.ACTIVE, photoUrl: ''
+      name: '', responsibleName: '', email: '', phone: '', cpf: '', birthDate: '', address: '', planId: plans[0]?.id || '', belt: BeltColor.WHITE, stripes: 0, status: StudentStatus.ACTIVE, photoUrl: ''
     });
   };
 
@@ -139,66 +140,96 @@ const StudentList: React.FC = () => {
                 </span>
               </div>
             </div>
+            {student.responsibleName && (
+              <div className="mt-2 pt-2 border-t border-slate-50">
+                <p className="text-[10px] font-black text-slate-400 uppercase">Responsável</p>
+                <p className="text-xs font-bold text-slate-700">{student.responsibleName}</p>
+              </div>
+            )}
           </div>
         ))}
+        {filteredStudents.length === 0 && (
+          <div className="col-span-full py-20 text-center bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+             <UserIcon size={48} className="mx-auto text-slate-200 mb-4" />
+             <p className="text-slate-400 font-medium">Nenhum aluno encontrado.</p>
+          </div>
+        )}
       </div>
 
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
-          <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
+          <div className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-slate-800">Novo Aluno</h2>
+              <h2 className="text-2xl font-black text-slate-800">Nova Matrícula</h2>
               <button onClick={() => setShowAddModal(false)} className="p-2 bg-slate-100 rounded-xl text-slate-400"><X size={24} /></button>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="flex flex-col items-center justify-center mb-6">
                 {isCameraActive ? (
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-emerald-500 bg-black">
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-500 bg-black">
                     <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                    <button type="button" onClick={capturePhoto} className="absolute bottom-4 left-1/2 -translate-x-1/2 p-3 bg-emerald-500 text-white rounded-full shadow-lg"><Camera size={20}/></button>
+                    <button type="button" onClick={capturePhoto} className="absolute bottom-2 left-1/2 -translate-x-1/2 p-2 bg-emerald-500 text-white rounded-full shadow-lg"><Camera size={16}/></button>
                   </div>
                 ) : (
-                  <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-slate-100 bg-slate-50 flex items-center justify-center">
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-slate-100 bg-slate-50 flex items-center justify-center">
                     {formData.photoUrl ? (
                       <img src={formData.photoUrl} className="w-full h-full object-cover" />
                     ) : (
-                      <Camera size={40} className="text-slate-300" />
+                      <Camera size={30} className="text-slate-300" />
                     )}
-                    <button type="button" onClick={startCamera} className="absolute bottom-0 right-0 p-3 bg-slate-800 text-white rounded-full"><RefreshCw size={16} /></button>
+                    <button type="button" onClick={startCamera} className="absolute bottom-0 right-0 p-2 bg-slate-800 text-white rounded-full shadow-lg"><RefreshCw size={14} /></button>
                   </div>
                 )}
                 <canvas ref={canvasRef} className="hidden" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Nome</label>
-                  <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-1">Dados do Aluno</h4>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nome Completo</label>
+                    <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone / WhatsApp</label>
+                    <input required type="tel" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Responsável (Pai/Mãe)</label>
+                    <input type="text" placeholder="Caso seja menor de idade" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.responsibleName} onChange={e => setFormData({...formData, responsibleName: e.target.value})} />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Telefone</label>
-                  <input required type="tel" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-1">Endereço e Plano</h4>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Endereço</label>
+                    <input type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Plano</label>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.planId} onChange={e => setFormData({...formData, planId: e.target.value})}>
+                        {plans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Faixa</label>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.belt} onChange={e => setFormData({...formData, belt: e.target.value as BeltColor})}>
+                        {Object.values(BeltColor).map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nascimento</label>
+                    <input type="date" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Plano</label>
-                  <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.planId} onChange={e => setFormData({...formData, planId: e.target.value})}>
-                    {plans.map(p => <option key={p.id} value={p.id}>{p.name} - ¥ {p.price.toLocaleString('ja-JP')}</option>)}
-                  </select>
-                </div>
-                <div>
-                   <label className="text-xs font-bold text-slate-400 uppercase">Faixa</label>
-                   <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.belt} onChange={e => setFormData({...formData, belt: e.target.value as BeltColor})}>
-                     {Object.values(BeltColor).map(b => <option key={b} value={b}>{b}</option>)}
-                   </select>
-                </div>
-              </div>
-
-              <button type="submit" className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-900/20 mt-4 hover:bg-emerald-700 transition-all">Salvar Aluno</button>
+              <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-black/20 mt-4 hover:bg-emerald-600 transition-all uppercase tracking-widest">Finalizar Matrícula</button>
             </form>
           </div>
         </div>
