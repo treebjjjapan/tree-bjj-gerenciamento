@@ -12,6 +12,7 @@ interface AppContextType {
   students: Student[];
   setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
   addStudent: (student: Omit<Student, 'id' | 'attendanceCount' | 'graduationHistory'>) => void;
+  updateStudent: (id: string, data: Partial<Student>) => void; // Nova função
   attendance: AttendanceRecord[];
   addAttendance: (studentId: string, classId?: string) => void;
   financials: FinancialRecord[];
@@ -104,6 +105,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStudents(prev => [newStudent, ...prev]);
   }, []);
 
+  const updateStudent = useCallback((id: string, data: Partial<Student>) => {
+    setStudents(prev => prev.map(s => {
+      if (s.id === id) {
+        const updatedStudent = { ...s, ...data };
+        // Se mudou a faixa ou graus, registramos no histórico
+        if (data.belt !== undefined || data.stripes !== undefined) {
+          updatedStudent.graduationHistory = [
+            ...(s.graduationHistory || []),
+            { date: new Date().toISOString().split('T')[0], belt: updatedStudent.belt, stripes: updatedStudent.stripes }
+          ];
+        }
+        return updatedStudent;
+      }
+      return s;
+    }));
+  }, []);
+
   const addAttendance = useCallback((studentId: string, classId?: string) => {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
@@ -144,7 +162,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{
-      currentUser, setCurrentUser, students, setStudents, addStudent,
+      currentUser, setCurrentUser, students, setStudents, addStudent, updateStudent,
       attendance, addAttendance, financials, setFinancials, addFinancial, deleteFinancial, products,
       notifications, plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules
     }}>

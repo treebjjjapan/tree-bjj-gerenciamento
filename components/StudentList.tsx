@@ -1,16 +1,17 @@
 
 import React, { useState, useRef } from 'react';
 import { 
-  Plus, Search, Phone, Calendar, Camera, X, RefreshCw, MapPin, User as UserIcon, Mail, Instagram
+  Plus, Search, Phone, Calendar, Camera, X, RefreshCw, MapPin, User as UserIcon, Mail, Instagram, Edit2, Save
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
-import { StudentStatus, BeltColor } from '../types';
+import { StudentStatus, BeltColor, Student } from '../types';
 import { BELT_COLORS } from '../constants.tsx';
 
 const StudentList: React.FC = () => {
-  const { students, addStudent, setStudents, plans } = useAppContext();
+  const { students, addStudent, updateStudent, setStudents, plans } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,7 +54,11 @@ const StudentList: React.FC = () => {
         canvasRef.current.height = videoRef.current.videoHeight;
         context.drawImage(videoRef.current, 0, 0);
         const dataUrl = canvasRef.current.toDataURL('image/png');
-        setFormData(prev => ({ ...prev, photoUrl: dataUrl }));
+        if (editingStudent) {
+          setEditingStudent({ ...editingStudent, photoUrl: dataUrl });
+        } else {
+          setFormData(prev => ({ ...prev, photoUrl: dataUrl }));
+        }
         stopCamera();
       }
     }
@@ -72,6 +77,19 @@ const StudentList: React.FC = () => {
     s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     s.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleOpenEdit = (student: Student) => {
+    setEditingStudent(student);
+  };
+
+  const handleUpdateStudent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    
+    updateStudent(editingStudent.id, editingStudent);
+    setEditingStudent(null);
+    alert("Perfil atualizado com sucesso!");
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,10 +142,25 @@ const StudentList: React.FC = () => {
                   <h3 className="font-bold text-slate-800 leading-tight group-hover:text-emerald-600 transition-colors">{student.name}</h3>
                   <div className="flex items-center mt-1 space-x-2">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${BELT_COLORS[student.belt]}`}>{student.belt}</span>
+                    <span className="text-[10px] text-slate-400 font-bold">{student.stripes} Graus</span>
                   </div>
                 </div>
               </div>
-              <button onClick={() => setStudents(prev => prev.filter(s => s.id !== student.id))} className="text-slate-200 hover:text-rose-500"><X size={16}/></button>
+              <div className="flex items-center space-x-1">
+                <button 
+                  onClick={() => handleOpenEdit(student)}
+                  className="p-1.5 text-slate-300 hover:text-emerald-500 transition-colors"
+                  title="Editar Perfil"
+                >
+                  <Edit2 size={16} />
+                </button>
+                <button 
+                  onClick={() => { if(window.confirm("Remover aluno?")) setStudents(prev => prev.filter(s => s.id !== student.id)) }} 
+                  className="p-1.5 text-slate-200 hover:text-rose-500 transition-colors"
+                >
+                  <X size={16}/>
+                </button>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 gap-2 py-4 border-t border-slate-50">
@@ -135,16 +168,10 @@ const StudentList: React.FC = () => {
                 <Phone size={14} className="text-slate-400 shrink-0" />
                 <span className="text-xs text-slate-600 font-medium">{student.phone}</span>
               </div>
-              {student.email && (
+              {student.address && (
                 <div className="flex items-center space-x-3">
-                  <Mail size={14} className="text-slate-400 shrink-0" />
-                  <span className="text-xs text-slate-600 truncate">{student.email}</span>
-                </div>
-              )}
-              {student.socialMedia && (
-                <div className="flex items-center space-x-3">
-                  <Instagram size={14} className="text-slate-400 shrink-0" />
-                  <span className="text-xs text-slate-600 truncate">{student.socialMedia}</span>
+                  <MapPin size={14} className="text-slate-400 shrink-0" />
+                  <span className="text-[11px] text-slate-500 leading-tight">{student.address}</span>
                 </div>
               )}
             </div>
@@ -165,14 +192,9 @@ const StudentList: React.FC = () => {
             </div>
           </div>
         ))}
-        {filteredStudents.length === 0 && (
-          <div className="col-span-full py-20 text-center bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-             <UserIcon size={48} className="mx-auto text-slate-200 mb-4" />
-             <p className="text-slate-400 font-medium">Nenhum aluno encontrado.</p>
-          </div>
-        )}
       </div>
 
+      {/* Modal de Adição */}
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
@@ -207,31 +229,23 @@ const StudentList: React.FC = () => {
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-1">Dados de Contato</h4>
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nome Completo</label>
-                    <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                    <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone (Japão)</label>
-                    <input required type="tel" placeholder="090-0000-0000" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">E-mail</label>
-                    <input type="email" placeholder="exemplo@gmail.com" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                    <input required type="tel" placeholder="090-0000-0000" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Instagram / Facebook</label>
-                    <input type="text" placeholder="@usuario" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.socialMedia} onChange={e => setFormData({...formData, socialMedia: e.target.value})} />
+                    <input type="text" placeholder="@usuario" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.socialMedia} onChange={e => setFormData({...formData, socialMedia: e.target.value})} />
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-1">Perfil e Plano</h4>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Responsável / Pai / Mãe</label>
-                    <input type="text" placeholder="Nome do responsável" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.responsibleName} onChange={e => setFormData({...formData, responsibleName: e.target.value})} />
-                  </div>
-                  <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Endereço no Japão</label>
-                    <input type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
+                    <input type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
@@ -247,14 +261,120 @@ const StudentList: React.FC = () => {
                       </select>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Data de Nascimento</label>
-                    <input type="date" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} />
-                  </div>
                 </div>
               </div>
 
               <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-black/20 mt-4 hover:bg-emerald-600 transition-all uppercase tracking-widest">Finalizar Matrícula</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição */}
+      {editingStudent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setEditingStudent(null)} />
+          <div className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-black text-slate-800">Editar Perfil</h2>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">ID: {editingStudent.id}</p>
+              </div>
+              <button onClick={() => setEditingStudent(null)} className="p-2 bg-slate-100 rounded-xl text-slate-400 hover:text-rose-500 transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form className="space-y-6" onSubmit={handleUpdateStudent}>
+              <div className="flex flex-col items-center justify-center mb-6">
+                {isCameraActive ? (
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-emerald-500 bg-black shadow-xl">
+                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                    <button type="button" onClick={capturePhoto} className="absolute bottom-2 left-1/2 -translate-x-1/2 p-2 bg-emerald-50 text-white rounded-full shadow-lg"><Camera size={16}/></button>
+                  </div>
+                ) : (
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-slate-100 bg-slate-50 flex items-center justify-center shadow-lg">
+                    <img src={editingStudent.photoUrl} className="w-full h-full object-cover" />
+                    <button type="button" onClick={startCamera} className="absolute bottom-0 right-0 p-2 bg-slate-800 text-white rounded-full shadow-lg"><RefreshCw size={14} /></button>
+                  </div>
+                )}
+                <canvas ref={canvasRef} className="hidden" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-1">Identificação e Contato</h4>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nome Completo</label>
+                    <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.name} onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone (Japão)</label>
+                    <input required type="tel" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.phone} onChange={e => setEditingStudent({...editingStudent, phone: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Instagram / Facebook</label>
+                    <input type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.socialMedia || ''} onChange={e => setEditingStudent({...editingStudent, socialMedia: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Responsável / Pai / Mãe</label>
+                    <input type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.responsibleName || ''} onChange={e => setEditingStudent({...editingStudent, responsibleName: e.target.value})} />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest border-b border-emerald-100 pb-1">Endereço e Graduação</h4>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Endereço Completo</label>
+                    <textarea rows={2} className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold resize-none" value={editingStudent.address || ''} onChange={e => setEditingStudent({...editingStudent, address: e.target.value})} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Faixa Atual</label>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.belt} onChange={e => setEditingStudent({...editingStudent, belt: e.target.value as BeltColor})}>
+                        {Object.values(BeltColor).map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Graus (Stripes)</label>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.stripes} onChange={e => setEditingStudent({...editingStudent, stripes: parseInt(e.target.value)})}>
+                        {[0, 1, 2, 3, 4].map(n => <option key={n} value={n}>{n} Graus</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Status</label>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.status} onChange={e => setEditingStudent({...editingStudent, status: e.target.value as StudentStatus})}>
+                        {Object.values(StudentStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Plano</label>
+                      <select className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.planId} onChange={e => setEditingStudent({...editingStudent, planId: e.target.value})}>
+                        {plans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-8">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingStudent(null)}
+                  className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all uppercase tracking-widest flex items-center justify-center space-x-2"
+                >
+                  <Save size={18} />
+                  <span>Salvar Alterações</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>
