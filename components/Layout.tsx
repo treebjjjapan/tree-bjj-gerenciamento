@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   Users, LayoutDashboard, CalendarCheck, DollarSign, ShoppingBag, 
-  Bell, LogOut, Menu, X, ChevronRight, Award, Settings
+  LogOut, Award, Settings
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { UserRole } from '../types';
@@ -24,16 +24,15 @@ const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
 );
 
 const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) => {
-  const { currentUser, setCurrentUser, notifications } = useAppContext();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { currentUser, setCurrentUser } = useAppContext();
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.ADMIN, UserRole.PROFESSOR] },
-    { id: 'students', label: 'Alunos', icon: Users, roles: [UserRole.ADMIN, UserRole.PROFESSOR] },
-    { id: 'attendance', label: 'Presença', icon: CalendarCheck, roles: [UserRole.ADMIN, UserRole.PROFESSOR] },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: [UserRole.ADMIN] },
+    { id: 'students', label: 'Alunos', icon: Users, roles: [UserRole.ADMIN] },
+    { id: 'attendance', label: 'Presença', icon: CalendarCheck, roles: [UserRole.ADMIN] },
     { id: 'financial', label: 'Financeiro', icon: DollarSign, roles: [UserRole.ADMIN] },
-    { id: 'belt', label: 'Graduação', icon: Award, roles: [UserRole.ADMIN, UserRole.PROFESSOR] },
-    { id: 'store', label: 'Loja', icon: ShoppingBag, roles: [UserRole.ADMIN, UserRole.PROFESSOR, UserRole.STUDENT] },
+    { id: 'belt', label: 'Graduação', icon: Award, roles: [UserRole.ADMIN] },
+    { id: 'store', label: 'Loja', icon: ShoppingBag, roles: [UserRole.ADMIN, UserRole.STUDENT] },
     { id: 'settings', label: 'Ajustes', icon: Settings, roles: [UserRole.ADMIN] },
   ];
 
@@ -41,7 +40,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) =
 
   const handleNav = (id: string) => {
     onViewChange(id);
-    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -83,7 +81,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeView, onViewChange }) =
                 <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black text-sm">{currentUser?.name.charAt(0)}</div>
                 <div className="text-left">
                   <p className="text-sm font-black text-slate-800 leading-none">{currentUser?.name}</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">{currentUser?.role}</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">ADMINISTRAÇÃO</p>
                 </div>
               </div>
             </div>

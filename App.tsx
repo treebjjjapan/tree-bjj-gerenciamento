@@ -9,7 +9,7 @@ import Financial from './components/Financial';
 import Store from './components/Store';
 import Settings from './components/Settings';
 import { UserRole } from './types';
-import { Award, ChevronRight, Settings as SettingsIcon } from 'lucide-react';
+import { Award, ChevronRight } from 'lucide-react';
 import { BELT_COLORS } from './constants.tsx';
 
 const ViewRenderer: React.FC<{ activeView: string }> = ({ activeView }) => {
@@ -34,7 +34,7 @@ const BeltView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
          <div>
             <h2 className="text-2xl font-black text-slate-800">Caminho do Guerreiro</h2>
@@ -44,7 +44,7 @@ const BeltView: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {students.map(s => {
+        {students.length > 0 ? students.map(s => {
           const rule = graduationRules.find(r => r.belt === s.belt);
           const progress = rule ? Math.min((s.attendanceCount / rule.classesRequired) * 100, 100) : 0;
           
@@ -56,12 +56,12 @@ const BeltView: React.FC = () => {
                   <h3 className="font-bold text-slate-800">{s.name}</h3>
                   <div className="flex items-center mt-1 space-x-2">
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${BELT_COLORS[s.belt]}`}>{s.belt}</span>
-                    <span className="text-slate-400 text-xs">{s.stripes} Graus</span>
+                    <span className="text-slate-400 text-xs font-bold">{s.stripes} Graus</span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-8 flex-1">
+              <div className="flex items-center space-x-8 flex-1 w-full md:w-auto">
                 <div className="text-center">
                   <p className="text-[10px] font-black text-slate-400 uppercase">Aulas</p>
                   <p className="text-xl font-black text-slate-800">{s.attendanceCount}</p>
@@ -75,14 +75,18 @@ const BeltView: React.FC = () => {
               </div>
 
               {progress >= 100 && (
-                <button className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-emerald-900/20">
+                <button className="flex items-center space-x-2 px-6 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-emerald-900/20 w-full md:w-auto justify-center">
                   <Award size={16} />
                   <span>Promover</span>
                 </button>
               )}
             </div>
           );
-        })}
+        }) : (
+          <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-slate-200 text-slate-400">
+            Nenhum aluno cadastrado para visualizar graduações.
+          </div>
+        )}
       </div>
     </div>
   );
@@ -93,10 +97,10 @@ const LoginScreen: React.FC = () => {
   
   const handleLogin = (role: UserRole) => {
     setCurrentUser({
-      id: Math.random().toString(),
-      name: role === UserRole.ADMIN ? 'Anderson Marques' : role === UserRole.PROFESSOR ? 'Professor Rodrigo' : 'Aluno Demo',
+      id: 'admin-01',
+      name: 'Anderson Marques',
       role,
-      email: `${role.toLowerCase()}@treebjj.com`
+      email: 'contato@treebjj.com'
     });
   };
 
@@ -114,29 +118,27 @@ const LoginScreen: React.FC = () => {
                <img src="https://raw.githubusercontent.com/lucas-labs/assets/main/tree-bjj-logo.png" alt="Tree BJJ" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Tree BJJ</h1>
-            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2 bg-slate-100 px-4 py-1 rounded-full">Sistema de Gestão</p>
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2 bg-slate-100 px-4 py-1 rounded-full">Gestão Centralizada</p>
           </div>
-          <div className="space-y-4">
-            <button onClick={() => handleLogin(UserRole.ADMIN)} className="w-full p-4 bg-slate-50 hover:bg-emerald-50 border border-slate-100 rounded-[2rem] flex items-center justify-between group transition-all">
+          
+          <div className="space-y-6">
+            <button 
+              onClick={() => handleLogin(UserRole.ADMIN)} 
+              className="w-full p-6 bg-slate-900 text-white rounded-[2.5rem] flex items-center justify-between group transition-all hover:bg-emerald-600 shadow-xl shadow-black/20"
+            >
               <div className="flex items-center space-x-4 text-left">
-                <div className="w-12 h-12 bg-slate-900 rounded-2xl shadow-md flex items-center justify-center text-white font-black border border-slate-800">A</div>
+                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-white font-black border border-white/20">A</div>
                 <div>
-                  <p className="font-black text-slate-800 leading-none">Administrador</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Controle Total</p>
+                  <p className="font-black text-white leading-none">Administrador</p>
+                  <p className="text-[10px] text-white/50 font-bold uppercase mt-1">Acesso Completo</p>
                 </div>
               </div>
-              <ChevronRight className="text-slate-300 group-hover:text-emerald-500 transition-colors" size={20} />
+              <ChevronRight className="text-white/40 group-hover:text-white transition-colors" size={24} />
             </button>
-            <button onClick={() => handleLogin(UserRole.PROFESSOR)} className="w-full p-4 bg-slate-50 hover:bg-blue-50 border border-slate-100 rounded-[2rem] flex items-center justify-between group transition-all">
-              <div className="flex items-center space-x-4 text-left">
-                <div className="w-12 h-12 bg-blue-600 rounded-2xl shadow-md flex items-center justify-center text-white font-black border border-blue-500">P</div>
-                <div>
-                  <p className="font-black text-slate-800 leading-none">Professor</p>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">Aulas e Graduações</p>
-                </div>
-              </div>
-              <ChevronRight className="text-slate-300 group-hover:text-blue-500 transition-colors" size={20} />
-            </button>
+            
+            <p className="text-center text-[10px] text-slate-400 font-black uppercase tracking-widest mt-4">
+              © Tree Brazilian Jiu Jitsu Japan
+            </p>
           </div>
         </div>
       </div>

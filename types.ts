@@ -1,7 +1,6 @@
 
 export enum UserRole {
   ADMIN = 'ADMIN',
-  PROFESSOR = 'PROFESSOR',
   STUDENT = 'STUDENT'
 }
 
@@ -61,7 +60,7 @@ export interface Student {
   id: string;
   name: string;
   responsibleName?: string;
-  socialMedia?: string; // Novo campo
+  socialMedia?: string;
   birthDate: string;
   cpf: string;
   phone: string;
