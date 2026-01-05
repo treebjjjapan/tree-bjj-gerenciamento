@@ -8,6 +8,7 @@ interface AppContextType {
   setCurrentUser: (user: User | null) => void;
   students: Student[];
   setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
+  addStudent: (student: Omit<Student, 'id' | 'attendanceCount' | 'graduationHistory'>) => void;
   attendance: AttendanceRecord[];
   addAttendance: (studentId: string) => void;
   financials: FinancialRecord[];
@@ -18,19 +19,53 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>({
-    id: 'admin1',
-    name: 'Anderson Marques',
-    role: UserRole.ADMIN,
-    email: 'mestre@treebjj.com'
+export const AppProvider: React.FC<{ children: React.SetStateAction<React.ReactNode> }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('treebjj_user');
+    return saved ? JSON.parse(saved) : {
+      id: 'admin1',
+      name: 'Anderson Marques',
+      role: UserRole.ADMIN,
+      email: 'mestre@treebjj.com'
+    };
   });
 
-  const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
-  const [financials, setFinancials] = useState<FinancialRecord[]>(INITIAL_FINANCIAL);
+  const [students, setStudents] = useState<Student[]>(() => {
+    const saved = localStorage.getItem('treebjj_students');
+    return saved ? JSON.parse(saved) : INITIAL_STUDENTS;
+  });
+
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
+    const saved = localStorage.getItem('treebjj_attendance');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [financials, setFinancials] = useState<FinancialRecord[]>(() => {
+    const saved = localStorage.getItem('treebjj_financials');
+    return saved ? JSON.parse(saved) : INITIAL_FINANCIAL;
+  });
+
   const [products] = useState<Product[]>(INITIAL_PRODUCTS);
   const [notifications, setNotifications] = useState<string[]>([]);
+
+  // Persist data
+  useEffect(() => {
+    localStorage.setItem('treebjj_students', JSON.stringify(students));
+    localStorage.setItem('treebjj_financials', JSON.stringify(financials));
+    localStorage.setItem('treebjj_attendance', JSON.stringify(attendance));
+    if (currentUser) localStorage.setItem('treebjj_user', JSON.stringify(currentUser));
+    else localStorage.removeItem('treebjj_user');
+  }, [students, financials, attendance, currentUser]);
+
+  const addStudent = useCallback((newStudentData: Omit<Student, 'id' | 'attendanceCount' | 'graduationHistory'>) => {
+    const newStudent: Student = {
+      ...newStudentData,
+      id: Math.random().toString(36).substr(2, 9),
+      attendanceCount: 0,
+      graduationHistory: [{ date: new Date().toISOString().split('T')[0], belt: newStudentData.belt, stripes: newStudentData.stripes }]
+    };
+    setStudents(prev => [newStudent, ...prev]);
+  }, []);
 
   const addAttendance = useCallback((studentId: string) => {
     const student = students.find(s => s.id === studentId);
@@ -54,21 +89,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFinancials(prev => [newRecord, ...prev]);
   }, []);
 
-  // Check for belt promotion notifications or payment alerts
   useEffect(() => {
     const newAlerts: string[] = [];
     students.forEach(s => {
-      if (s.attendanceCount % 50 === 0 && s.attendanceCount > 0) {
-        newAlerts.push(`Avaliação de faixa sugerida para: ${s.name}`);
-      }
-    });
-    financials.forEach(f => {
-      if (f.status === PaymentStatus.OVERDUE) {
-        newAlerts.push(`Pagamento atrasado: ${f.description}`);
+      if (s.attendanceCount > 0 && s.attendanceCount % 50 === 0) {
+        newAlerts.push(`Avaliação sugerida: ${s.name} atingiu ${s.attendanceCount} aulas.`);
       }
     });
     setNotifications(newAlerts);
-  }, [students, financials]);
+  }, [students]);
 
   return (
     <AppContext.Provider value={{
@@ -76,6 +105,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentUser,
       students,
       setStudents,
+      addStudent,
       attendance,
       addAttendance,
       financials,

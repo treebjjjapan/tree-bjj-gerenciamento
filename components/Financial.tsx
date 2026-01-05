@@ -1,24 +1,49 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   DollarSign, 
   TrendingUp, 
   TrendingDown, 
   Plus, 
   Filter,
-  ArrowUpRight,
-  ArrowDownRight,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { PaymentStatus } from '../types';
 
 const Financial: React.FC = () => {
-  const { financials } = useAppContext();
+  const { financials, addFinancial, students } = useAppContext();
+  const [showModal, setShowModal] = useState(false);
+  
+  // Form State
+  const [formData, setFormData] = useState({
+    description: '',
+    amount: '',
+    type: 'INCOME' as 'INCOME' | 'EXPENSE',
+    category: 'Mensalidade',
+    status: PaymentStatus.PAID,
+    studentId: ''
+  });
 
   const income = financials.filter(f => f.type === 'INCOME').reduce((s, f) => s + f.amount, 0);
   const expense = financials.filter(f => f.type === 'EXPENSE').reduce((s, f) => s + f.amount, 0);
   const balance = income - expense;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.description || !formData.amount) return;
+    
+    addFinancial({
+      ...formData,
+      amount: parseFloat(formData.amount),
+      date: new Date().toISOString().split('T')[0],
+      studentId: formData.studentId || undefined
+    });
+    
+    setShowModal(false);
+    setFormData({ description: '', amount: '', type: 'INCOME', category: 'Mensalidade', status: PaymentStatus.PAID, studentId: '' });
+  };
 
   return (
     <div className="space-y-6">
@@ -26,7 +51,9 @@ const Financial: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <p className="text-sm font-bold text-slate-400 uppercase mb-1">Saldo Total</p>
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-black text-slate-800">R$ {balance.toLocaleString()}</h2>
+            <h2 className={`text-3xl font-black ${balance >= 0 ? 'text-slate-800' : 'text-rose-500'}`}>
+              R$ {balance.toLocaleString()}
+            </h2>
             <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600">
               <DollarSign size={24} />
             </div>
@@ -54,12 +81,15 @@ const Financial: React.FC = () => {
 
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800">Transações Recentes</h3>
+          <h3 className="font-bold text-slate-800">Transações</h3>
           <div className="flex items-center space-x-2">
             <button className="p-2 bg-slate-50 rounded-xl text-slate-600 hover:bg-slate-100">
               <Filter size={18} />
             </button>
-            <button className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm">
+            <button 
+              onClick={() => setShowModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-sm"
+            >
               <Plus size={18} />
               <span>Lançar</span>
             </button>
@@ -103,14 +133,101 @@ const Financial: React.FC = () => {
             </tbody>
           </table>
         </div>
-        
-        <div className="p-4 bg-slate-50/50 flex items-center justify-center">
-           <button className="flex items-center space-x-2 text-xs font-bold text-slate-500 hover:text-emerald-600 transition-colors">
-              <FileText size={16} />
-              <span>Gerar Relatório Completo (PDF)</span>
-           </button>
-        </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-black text-slate-800">Nova Transação</h2>
+              <button onClick={() => setShowModal(false)} className="p-2 bg-slate-100 rounded-xl text-slate-400">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  type="button"
+                  onClick={() => setFormData({...formData, type: 'INCOME'})}
+                  className={`py-3 rounded-2xl font-bold text-sm border-2 transition-all ${formData.type === 'INCOME' ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-100 text-slate-400'}`}
+                >
+                  Entrada
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setFormData({...formData, type: 'EXPENSE'})}
+                  className={`py-3 rounded-2xl font-bold text-sm border-2 transition-all ${formData.type === 'EXPENSE' ? 'bg-rose-500 border-rose-500 text-white' : 'border-slate-100 text-slate-400'}`}
+                >
+                  Saída
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase ml-1">Descrição</label>
+                  <input 
+                    required
+                    type="text" 
+                    className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" 
+                    placeholder="Ex: Mensalidade João Silva" 
+                    value={formData.description}
+                    onChange={e => setFormData({...formData, description: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Valor (R$)</label>
+                    <input 
+                      required
+                      type="number" 
+                      step="0.01"
+                      className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500" 
+                      placeholder="0,00" 
+                      value={formData.amount}
+                      onChange={e => setFormData({...formData, amount: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Categoria</label>
+                    <select 
+                      className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500"
+                      value={formData.category}
+                      onChange={e => setFormData({...formData, category: e.target.value})}
+                    >
+                      <option>Mensalidade</option>
+                      <option>Venda Loja</option>
+                      <option>Aluguel</option>
+                      <option>Energia/Água</option>
+                      <option>Limpeza</option>
+                      <option>Marketing</option>
+                      <option>Outros</option>
+                    </select>
+                  </div>
+                </div>
+                {formData.type === 'INCOME' && (
+                   <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Vincular Aluno (Opcional)</label>
+                    <select 
+                      className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500"
+                      value={formData.studentId}
+                      onChange={e => setFormData({...formData, studentId: e.target.value})}
+                    >
+                      <option value="">Não vincular</option>
+                      {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-black/20 mt-4 hover:bg-emerald-600 transition-all">
+                Salvar Lançamento
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
