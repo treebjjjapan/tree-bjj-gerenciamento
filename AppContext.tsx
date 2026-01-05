@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Student, AttendanceRecord, FinancialRecord, Product, User, UserRole, 
   StudentStatus, BeltColor, Plan, ClassSchedule, GraduationRule 
@@ -27,27 +27,26 @@ interface AppContextType {
   setSchedules: React.Dispatch<React.SetStateAction<ClassSchedule[]>>;
   graduationRules: GraduationRule[];
   setGraduationRules: React.Dispatch<React.SetStateAction<GraduationRule[]>>;
-  importAppData: (jsonString: string) => boolean;
-  exportAppData: () => string;
+  
+  // Cloud Sync Props
+  syncId: string;
+  setSyncId: (id: string) => void;
+  isSyncing: boolean;
+  lastSync: Date | null;
+  forceSync: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const DEFAULT_PLANS: Plan[] = [
-  { id: 'p1', name: 'Mensal', price: 10000, durationMonths: 1 },
-  { id: 'p2', name: 'Trimestral', price: 27000, durationMonths: 3 },
-  { id: 'p3', name: 'Semestral', price: 50000, durationMonths: 6 },
-  { id: 'p4', name: 'Anual', price: 90000, durationMonths: 12 },
-];
-
-const DEFAULT_GRADUATION_RULES: GraduationRule[] = [
-  { belt: BeltColor.WHITE, classesRequired: 40, monthsRequired: 4 },
-  { belt: BeltColor.BLUE, classesRequired: 150, monthsRequired: 24 },
-  { belt: BeltColor.PURPLE, classesRequired: 200, monthsRequired: 24 },
-  { belt: BeltColor.BROWN, classesRequired: 250, monthsRequired: 12 },
-];
+const JSON_BLOB_API = "https://jsonblob.com/api/jsonBlob";
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [syncId, setSyncId] = useState<string>(() => localStorage.getItem('treebjj_sync_id') || '');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSync, setLastSync] = useState<Date | null>(null);
+  const isInitialMount = useRef(true);
+  const skipNextSync = useRef(false);
+
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('treebjj_user');
     return saved ? JSON.parse(saved) : null;
@@ -70,7 +69,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [plans, setPlans] = useState<Plan[]>(() => {
     const saved = localStorage.getItem('treebjj_plans');
-    return saved ? JSON.parse(saved) : DEFAULT_PLANS;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [schedules, setSchedules] = useState<ClassSchedule[]>(() => {
@@ -80,22 +79,108 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [graduationRules, setGraduationRules] = useState<GraduationRule[]>(() => {
     const saved = localStorage.getItem('treebjj_grad_rules');
-    return saved ? JSON.parse(saved) : DEFAULT_GRADUATION_RULES;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [products] = useState<Product[]>(INITIAL_PRODUCTS);
   const [notifications, setNotifications] = useState<string[]>([]);
 
+  // Salva ID de Sync
   useEffect(() => {
+    if (syncId) localStorage.setItem('treebjj_sync_id', syncId);
+  }, [syncId]);
+
+  // Função para Empurrar dados para a Nuvem
+  const pushToCloud = useCallback(async () => {
+    if (!syncId || isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const data = {
+        students,
+        attendance,
+        financials,
+        plans,
+        schedules,
+        graduationRules,
+        updatedAt: new Date().toISOString()
+      };
+      await fetch(`${JSON_BLOB_API}/${syncId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      setLastSync(new Date());
+    } catch (err) {
+      console.error("Erro ao sincronizar na nuvem", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [syncId, students, attendance, financials, plans, schedules, graduationRules]);
+
+  // Função para Puxar dados da Nuvem
+  const pullFromCloud = useCallback(async (idToUse = syncId) => {
+    if (!idToUse) return;
+    setIsSyncing(true);
+    try {
+      const response = await fetch(`${JSON_BLOB_API}/${idToUse}`);
+      if (response.ok) {
+        const data = await response.json();
+        skipNextSync.current = true; // Evita loop infinito
+        if (data.students) setStudents(data.students);
+        if (data.attendance) setAttendance(data.attendance);
+        if (data.financials) setFinancials(data.financials);
+        if (data.plans) setPlans(data.plans);
+        if (data.schedules) setSchedules(data.schedules);
+        if (data.graduationRules) setGraduationRules(data.graduationRules);
+        setLastSync(new Date());
+      }
+    } catch (err) {
+      console.error("Erro ao baixar dados da nuvem", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [syncId]);
+
+  // Sincronização Automática ao alterar dados (Push)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (skipNextSync.current) {
+      skipNextSync.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      pushToCloud();
+    }, 2000); // Debounce de 2 segundos para não sobrecarregar
+
+    // Persistência Local sempre
     localStorage.setItem('treebjj_students', JSON.stringify(students));
     localStorage.setItem('treebjj_financials', JSON.stringify(financials));
     localStorage.setItem('treebjj_attendance', JSON.stringify(attendance));
     localStorage.setItem('treebjj_plans', JSON.stringify(plans));
     localStorage.setItem('treebjj_schedules', JSON.stringify(schedules));
     localStorage.setItem('treebjj_grad_rules', JSON.stringify(graduationRules));
-    if (currentUser) localStorage.setItem('treebjj_user', JSON.stringify(currentUser));
-    else localStorage.removeItem('treebjj_user');
-  }, [students, financials, attendance, currentUser, plans, schedules, graduationRules]);
+
+    return () => clearTimeout(timer);
+  }, [students, financials, attendance, plans, schedules, graduationRules, pushToCloud]);
+
+  // Polling para checar se o outro dispositivo mudou algo (Pull)
+  useEffect(() => {
+    if (!syncId) return;
+    
+    // Puxa ao iniciar
+    pullFromCloud();
+
+    // Checa a cada 15 segundos por novidades
+    const interval = setInterval(() => {
+      pullFromCloud();
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [syncId, pullFromCloud]);
 
   const addStudent = useCallback((newStudentData: Omit<Student, 'id' | 'attendanceCount' | 'graduationHistory'>) => {
     const newStudent: Student = {
@@ -108,35 +193,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const updateStudent = useCallback((id: string, data: Partial<Student>) => {
-    setStudents(prev => prev.map(s => {
-      if (s.id === id) {
-        const updatedStudent = { ...s, ...data };
-        if (data.belt !== undefined || data.stripes !== undefined) {
-          updatedStudent.graduationHistory = [
-            ...(s.graduationHistory || []),
-            { date: new Date().toISOString().split('T')[0], belt: updatedStudent.belt, stripes: updatedStudent.stripes }
-          ];
-        }
-        return updatedStudent;
-      }
-      return s;
-    }));
+    setStudents(prev => prev.map(s => s.id === id ? { ...s, ...data } : s));
   }, []);
 
   const addAttendance = useCallback((studentId: string, classId?: string) => {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
-
     const newRecord: AttendanceRecord = {
       id: Math.random().toString(36).substr(2, 9),
       studentId,
       studentName: student.name,
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      classId,
       method: 'TOTEM'
     };
-
     setAttendance(prev => [newRecord, ...prev]);
     setStudents(prev => prev.map(s => s.id === studentId ? { ...s, attendanceCount: s.attendanceCount + 1 } : s));
   }, [students]);
@@ -150,52 +220,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFinancials(prev => prev.filter(f => f.id !== id));
   }, []);
 
-  const exportAppData = () => {
-    const data = {
-      students,
-      financials,
-      attendance,
-      plans,
-      schedules,
-      graduationRules,
-      exportedAt: new Date().toISOString()
-    };
-    return JSON.stringify(data);
-  };
-
-  const importAppData = (jsonString: string) => {
-    try {
-      const data = JSON.parse(jsonString);
-      if (data.students) setStudents(data.students);
-      if (data.financials) setFinancials(data.financials);
-      if (data.attendance) setAttendance(data.attendance);
-      if (data.plans) setPlans(data.plans);
-      if (data.schedules) setSchedules(data.schedules);
-      if (data.graduationRules) setGraduationRules(data.graduationRules);
-      return true;
-    } catch (e) {
-      console.error("Erro na importação", e);
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    const newAlerts: string[] = [];
-    students.forEach(s => {
-      const rule = graduationRules.find(r => r.belt === s.belt);
-      if (rule && s.attendanceCount >= rule.classesRequired) {
-        newAlerts.push(`Apta Graduação: ${s.name} atingiu ${s.attendanceCount}/${rule.classesRequired} aulas.`);
-      }
-    });
-    setNotifications(newAlerts);
-  }, [students, graduationRules]);
-
   return (
     <AppContext.Provider value={{
       currentUser, setCurrentUser, students, setStudents, addStudent, updateStudent,
       attendance, addAttendance, financials, setFinancials, addFinancial, deleteFinancial, products,
       notifications, plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules,
-      exportAppData, importAppData
+      syncId, setSyncId, isSyncing, lastSync, forceSync: pullFromCloud
     }}>
       {children}
     </AppContext.Provider>
