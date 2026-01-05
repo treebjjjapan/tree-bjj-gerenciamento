@@ -29,6 +29,27 @@ export enum StudentStatus {
   FROZEN = 'Trancado'
 }
 
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  durationMonths: number;
+}
+
+export interface ClassSchedule {
+  id: string;
+  dayOfWeek: string;
+  time: string;
+  className: string;
+  instructor: string;
+}
+
+export interface GraduationRule {
+  belt: BeltColor;
+  classesRequired: number;
+  monthsRequired: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -44,7 +65,7 @@ export interface Student {
   phone: string;
   email: string;
   address: string;
-  plan: string;
+  planId: string;
   enrollmentDate: string;
   status: StudentStatus;
   photoUrl: string;
@@ -60,6 +81,7 @@ export interface AttendanceRecord {
   studentName: string;
   date: string;
   time: string;
+  classId?: string;
   method: 'MANUAL' | 'QRCODE';
 }
 

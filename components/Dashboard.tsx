@@ -6,9 +6,10 @@ import {
   DollarSign, 
   CalendarCheck,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Plus
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAppContext } from '../AppContext';
 import { PaymentStatus } from '../types';
 
@@ -29,19 +30,20 @@ const Dashboard: React.FC = () => {
   const profit = revenue - expenses;
 
   const stats = [
-    { label: 'Total de Alunos', value: totalStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', trend: '+5%' },
-    { label: 'Receita (Mês)', value: `R$ ${revenue.toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', trend: '+12%' },
-    { label: 'Lucro Líquido', value: `R$ ${profit.toLocaleString()}`, icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50', trend: '-2%' },
-    { label: 'Check-ins (Hoje)', value: attendance.filter(a => a.date === new Date().toISOString().split('T')[0]).length, icon: CalendarCheck, color: 'text-purple-600', bg: 'bg-purple-50', trend: 'Estável' },
+    { label: 'Alunos Ativos', value: activeStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Receita Total', value: `R$ ${revenue.toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Lucro Líquido', value: `R$ ${profit.toLocaleString()}`, icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Check-ins (Hoje)', value: attendance.filter(a => a.date === new Date().toISOString().split('T')[0]).length, icon: CalendarCheck, color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
-  // Dummy chart data
-  const data = [
-    { name: 'Jan', receita: 4000, despesa: 2400 },
-    { name: 'Fev', receita: 3000, despesa: 1398 },
-    { name: 'Mar', receita: 2000, despesa: 9800 },
-    { name: 'Abr', receita: 2780, despesa: 3908 },
-    { name: 'Mai', receita: 5890, despesa: 4800 },
+  const chartData = financials.length > 0 ? [
+    { name: 'Receita', valor: revenue },
+    { name: 'Despesa', valor: expenses },
+    { name: 'Lucro', valor: profit },
+  ] : [
+    { name: 'Jan', valor: 0 },
+    { name: 'Fev', valor: 0 },
+    { name: 'Mar', valor: 0 },
   ];
 
   return (
@@ -53,10 +55,6 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between mb-4">
               <div className={`${stat.bg} ${stat.color} p-3 rounded-2xl`}>
                 <stat.icon size={24} />
-              </div>
-              <div className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${stat.trend.startsWith('+') ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                {stat.trend}
-                {stat.trend.startsWith('+') ? <ArrowUpRight size={12} className="ml-1" /> : <ArrowDownRight size={12} className="ml-1" />}
               </div>
             </div>
             <div>
@@ -70,31 +68,30 @@ const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Main Chart */}
         <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-slate-800">Fluxo de Caixa</h3>
-            <select className="bg-slate-50 border-none rounded-lg text-sm font-medium px-3 py-1 focus:ring-0">
-              <option>Últimos 6 meses</option>
-              <option>Este ano</option>
-            </select>
-          </div>
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
-                <defs>
-                  <linearGradient id="colorRec" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} 
-                />
-                <Area type="monotone" dataKey="receita" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRec)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <h3 className="font-bold text-slate-800 mb-6">Visão Financeira</h3>
+          <div className="h-72 w-full flex items-center justify-center">
+            {financials.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                  <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
+                  <Area type="monotone" dataKey="valor" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorVal)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-center text-slate-400">
+                <TrendingUp size={48} className="mx-auto mb-2 opacity-10" />
+                <p className="text-sm">Aguardando dados financeiros...</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -119,14 +116,27 @@ const Dashboard: React.FC = () => {
               </div>
             )) : (
               <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-                <CalendarCheck size={48} className="mb-2 opacity-20" />
-                <p className="text-sm">Nenhum check-in registrado hoje.</p>
+                <CalendarCheck size={48} className="mb-2 opacity-10" />
+                <p className="text-sm italic">Nenhum check-in hoje.</p>
               </div>
             )}
           </div>
-          <button className="w-full mt-6 text-emerald-600 text-sm font-bold hover:underline">Ver todos os registros</button>
         </div>
       </div>
+
+      {students.length === 0 && (
+        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <h3 className="text-2xl font-black mb-2">Bem-vindo à Tree BJJ!</h3>
+            <p className="text-slate-400 max-w-lg mb-6">Seu sistema está pronto para uso. Comece cadastrando seu primeiro aluno para ver a mágica acontecer.</p>
+            <button className="px-6 py-3 bg-emerald-500 rounded-2xl font-black text-sm flex items-center space-x-2 shadow-xl shadow-emerald-500/20">
+              <Plus size={18} />
+              <span>Adicionar Primeiro Aluno</span>
+            </button>
+          </div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+        </div>
+      )}
     </div>
   );
 };

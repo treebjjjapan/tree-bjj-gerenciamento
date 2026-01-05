@@ -1,6 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Student, AttendanceRecord, FinancialRecord, Product, User, UserRole, StudentStatus, BeltColor, PaymentStatus } from './types';
+import { 
+  Student, AttendanceRecord, FinancialRecord, Product, User, UserRole, 
+  StudentStatus, BeltColor, PaymentStatus, Plan, ClassSchedule, GraduationRule 
+} from './types';
 import { INITIAL_STUDENTS, INITIAL_FINANCIAL, INITIAL_PRODUCTS } from './constants';
 
 interface AppContextType {
@@ -10,24 +13,39 @@ interface AppContextType {
   setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
   addStudent: (student: Omit<Student, 'id' | 'attendanceCount' | 'graduationHistory'>) => void;
   attendance: AttendanceRecord[];
-  addAttendance: (studentId: string) => void;
+  addAttendance: (studentId: string, classId?: string) => void;
   financials: FinancialRecord[];
   addFinancial: (record: Omit<FinancialRecord, 'id'>) => void;
   products: Product[];
   notifications: string[];
+  plans: Plan[];
+  setPlans: React.Dispatch<React.SetStateAction<Plan[]>>;
+  schedules: ClassSchedule[];
+  setSchedules: React.Dispatch<React.SetStateAction<ClassSchedule[]>>;
+  graduationRules: GraduationRule[];
+  setGraduationRules: React.Dispatch<React.SetStateAction<GraduationRule[]>>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.SetStateAction<React.ReactNode> }> = ({ children }) => {
+const DEFAULT_PLANS: Plan[] = [
+  { id: 'p1', name: 'Mensal', price: 250, durationMonths: 1 },
+  { id: 'p2', name: 'Trimestral', price: 650, durationMonths: 3 },
+  { id: 'p3', name: 'Semestral', price: 1200, durationMonths: 6 },
+  { id: 'p4', name: 'Anual', price: 2200, durationMonths: 12 },
+];
+
+const DEFAULT_GRADUATION_RULES: GraduationRule[] = [
+  { belt: BeltColor.WHITE, classesRequired: 40, monthsRequired: 4 },
+  { belt: BeltColor.BLUE, classesRequired: 150, monthsRequired: 24 },
+  { belt: BeltColor.PURPLE, classesRequired: 200, monthsRequired: 24 },
+  { belt: BeltColor.BROWN, classesRequired: 250, monthsRequired: 12 },
+];
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('treebjj_user');
-    return saved ? JSON.parse(saved) : {
-      id: 'admin1',
-      name: 'Anderson Marques',
-      role: UserRole.ADMIN,
-      email: 'mestre@treebjj.com'
-    };
+    return saved ? JSON.parse(saved) : null;
   });
 
   const [students, setStudents] = useState<Student[]>(() => {
@@ -45,17 +63,34 @@ export const AppProvider: React.FC<{ children: React.SetStateAction<React.ReactN
     return saved ? JSON.parse(saved) : INITIAL_FINANCIAL;
   });
 
+  const [plans, setPlans] = useState<Plan[]>(() => {
+    const saved = localStorage.getItem('treebjj_plans');
+    return saved ? JSON.parse(saved) : DEFAULT_PLANS;
+  });
+
+  const [schedules, setSchedules] = useState<ClassSchedule[]>(() => {
+    const saved = localStorage.getItem('treebjj_schedules');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [graduationRules, setGraduationRules] = useState<GraduationRule[]>(() => {
+    const saved = localStorage.getItem('treebjj_grad_rules');
+    return saved ? JSON.parse(saved) : DEFAULT_GRADUATION_RULES;
+  });
+
   const [products] = useState<Product[]>(INITIAL_PRODUCTS);
   const [notifications, setNotifications] = useState<string[]>([]);
 
-  // Persist data
   useEffect(() => {
     localStorage.setItem('treebjj_students', JSON.stringify(students));
     localStorage.setItem('treebjj_financials', JSON.stringify(financials));
     localStorage.setItem('treebjj_attendance', JSON.stringify(attendance));
+    localStorage.setItem('treebjj_plans', JSON.stringify(plans));
+    localStorage.setItem('treebjj_schedules', JSON.stringify(schedules));
+    localStorage.setItem('treebjj_grad_rules', JSON.stringify(graduationRules));
     if (currentUser) localStorage.setItem('treebjj_user', JSON.stringify(currentUser));
     else localStorage.removeItem('treebjj_user');
-  }, [students, financials, attendance, currentUser]);
+  }, [students, financials, attendance, currentUser, plans, schedules, graduationRules]);
 
   const addStudent = useCallback((newStudentData: Omit<Student, 'id' | 'attendanceCount' | 'graduationHistory'>) => {
     const newStudent: Student = {
@@ -67,7 +102,7 @@ export const AppProvider: React.FC<{ children: React.SetStateAction<React.ReactN
     setStudents(prev => [newStudent, ...prev]);
   }, []);
 
-  const addAttendance = useCallback((studentId: string) => {
+  const addAttendance = useCallback((studentId: string, classId?: string) => {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
 
@@ -77,6 +112,7 @@ export const AppProvider: React.FC<{ children: React.SetStateAction<React.ReactN
       studentName: student.name,
       date: new Date().toISOString().split('T')[0],
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      classId,
       method: 'MANUAL'
     };
 
@@ -92,26 +128,19 @@ export const AppProvider: React.FC<{ children: React.SetStateAction<React.ReactN
   useEffect(() => {
     const newAlerts: string[] = [];
     students.forEach(s => {
-      if (s.attendanceCount > 0 && s.attendanceCount % 50 === 0) {
-        newAlerts.push(`Avaliação sugerida: ${s.name} atingiu ${s.attendanceCount} aulas.`);
+      const rule = graduationRules.find(r => r.belt === s.belt);
+      if (rule && s.attendanceCount >= rule.classesRequired) {
+        newAlerts.push(`Apta Graduação: ${s.name} atingiu ${s.attendanceCount}/${rule.classesRequired} aulas.`);
       }
     });
     setNotifications(newAlerts);
-  }, [students]);
+  }, [students, graduationRules]);
 
   return (
     <AppContext.Provider value={{
-      currentUser,
-      setCurrentUser,
-      students,
-      setStudents,
-      addStudent,
-      attendance,
-      addAttendance,
-      financials,
-      addFinancial,
-      products,
-      notifications
+      currentUser, setCurrentUser, students, setStudents, addStudent,
+      attendance, addAttendance, financials, addFinancial, products,
+      notifications, plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules
     }}>
       {children}
     </AppContext.Provider>
