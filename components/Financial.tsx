@@ -10,7 +10,9 @@ import {
   Calendar,
   Layers,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileDown,
+  Printer
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { PaymentStatus } from '../types';
@@ -29,7 +31,6 @@ const Financial: React.FC = () => {
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
-  // Gerar anos de 2023 até 2035
   const years = Array.from({ length: 13 }, (_, i) => 2023 + i);
 
   const filteredFinancials = financials.filter(f => {
@@ -82,10 +83,51 @@ const Financial: React.FC = () => {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      {/* Header com Abas e Seletores */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+      {/* Elemento Visível Apenas no PDF/Impressão */}
+      <div className="print-only mb-10">
+        <div className="flex items-center justify-between border-b-2 border-slate-900 pb-6">
+          <div className="flex items-center space-x-4">
+             <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center p-2 text-white">
+                <img src="https://raw.githubusercontent.com/lucas-labs/assets/main/tree-bjj-logo.png" className="w-full h-full object-contain filter invert" />
+             </div>
+             <div>
+                <h1 className="text-2xl font-black text-slate-900">RELATÓRIO FINANCEIRO</h1>
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tree Brazilian Jiu Jitsu Japan</p>
+             </div>
+          </div>
+          <div className="text-right">
+             <p className="text-xs font-bold text-slate-400">EMITIDO EM</p>
+             <p className="text-sm font-black text-slate-800">{new Date().toLocaleDateString('pt-BR')}</p>
+             <p className="text-xs font-black text-emerald-600 mt-1 uppercase">
+               Período: {viewMode === 'monthly' ? `${months[selectedMonth]} / ${selectedYear}` : `Ano de ${selectedYear}`}
+             </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mt-8">
+           <div className="border border-slate-200 p-4 rounded-lg">
+              <p className="text-[10px] font-black text-slate-400 uppercase">Entradas</p>
+              <p className="text-lg font-black text-emerald-600">¥ {income.toLocaleString('ja-JP')}</p>
+           </div>
+           <div className="border border-slate-200 p-4 rounded-lg">
+              <p className="text-[10px] font-black text-slate-400 uppercase">Saídas</p>
+              <p className="text-lg font-black text-rose-600">¥ {expense.toLocaleString('ja-JP')}</p>
+           </div>
+           <div className="border border-slate-900 bg-slate-50 p-4 rounded-lg">
+              <p className="text-[10px] font-black text-slate-400 uppercase">Saldo Final</p>
+              <p className={`text-lg font-black ${balance >= 0 ? 'text-slate-900' : 'text-rose-600'}`}>¥ {balance.toLocaleString('ja-JP')}</p>
+           </div>
+        </div>
+      </div>
+
+      {/* Header com Abas e Seletores (Hidden on Print) */}
+      <div className="no-print flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div className="flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm w-fit">
           <button 
             onClick={() => setViewMode('monthly')}
@@ -134,17 +176,27 @@ const Financial: React.FC = () => {
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
 
-          <button 
-            onClick={() => setShowModal(true)}
-            className="flex items-center space-x-2 px-6 py-2 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-all ml-auto md:ml-0"
-          >
-            <Plus size={18} />
-            <span>Novo Lançamento</span>
-          </button>
+          <div className="flex items-center space-x-2 ml-auto md:ml-0">
+            <button 
+              onClick={handlePrint}
+              className="p-2 bg-white border border-slate-100 text-slate-600 rounded-xl hover:bg-slate-50 transition-all shadow-sm flex items-center space-x-2"
+              title="Exportar Relatório em PDF"
+            >
+              <FileDown size={18} />
+              <span className="hidden sm:inline text-xs font-bold">PDF</span>
+            </button>
+            <button 
+              onClick={() => setShowModal(true)}
+              className="flex items-center space-x-2 px-6 py-2 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-lg shadow-slate-900/20 hover:bg-slate-800 transition-all"
+            >
+              <Plus size={18} />
+              <span className="hidden sm:inline">Lançamento</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Cards de Resumo */}
+      {/* Cards de Resumo (Visible on Screen, stylized on Print) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Saldo Líquido</p>
@@ -152,7 +204,7 @@ const Financial: React.FC = () => {
             <h2 className={`text-3xl font-black ${balance >= 0 ? 'text-slate-800' : 'text-rose-500'}`}>
               ¥ {balance.toLocaleString('ja-JP')}
             </h2>
-            <div className={`p-2 rounded-xl ${balance >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>
+            <div className={`no-print p-2 rounded-xl ${balance >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-500'}`}>
               <Layers size={24} />
             </div>
           </div>
@@ -161,7 +213,7 @@ const Financial: React.FC = () => {
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Entradas</p>
           <div className="flex items-center justify-between">
             <h2 className="text-3xl font-black text-emerald-600">¥ {income.toLocaleString('ja-JP')}</h2>
-            <div className="bg-emerald-50 p-2 rounded-xl text-emerald-600">
+            <div className="no-print bg-emerald-50 p-2 rounded-xl text-emerald-600">
               <TrendingUp size={24} />
             </div>
           </div>
@@ -170,7 +222,7 @@ const Financial: React.FC = () => {
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Saídas</p>
           <div className="flex items-center justify-between">
             <h2 className="text-3xl font-black text-rose-500">¥ {expense.toLocaleString('ja-JP')}</h2>
-            <div className="bg-rose-50 p-2 rounded-xl text-rose-500">
+            <div className="no-print bg-rose-50 p-2 rounded-xl text-rose-500">
               <TrendingDown size={24} />
             </div>
           </div>
@@ -179,12 +231,16 @@ const Financial: React.FC = () => {
 
       {/* Tabela de Lançamentos */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+        <div className="no-print p-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
           <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs flex items-center gap-2">
             <Calendar size={16} className="text-emerald-600" />
             {viewMode === 'monthly' ? `Transações de ${months[selectedMonth]} / ${selectedYear}` : `Histórico Geral de ${selectedYear}`}
           </h3>
           <span className="text-[10px] font-bold text-slate-400 uppercase">{filteredFinancials.length} Registros</span>
+        </div>
+
+        <div className="print-only p-4 bg-slate-50 border-b font-black text-xs uppercase tracking-widest">
+           Lista de Transações Detalhada
         </div>
 
         <div className="overflow-x-auto">
@@ -195,14 +251,14 @@ const Financial: React.FC = () => {
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Descrição</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Categoria</th>
                 <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right">Valor</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center">Ação</th>
+                <th className="no-print px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {filteredFinancials.length > 0 ? filteredFinancials.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(f => (
                 <tr key={f.id} className="hover:bg-slate-50/40 transition-colors group">
                   <td className="px-6 py-4 text-xs font-bold text-slate-500">
-                    {new Date(f.date).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+                    {new Date(f.date).toLocaleDateString('pt-BR')}
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-black text-slate-800">{f.description}</p>
@@ -215,11 +271,10 @@ const Financial: React.FC = () => {
                   <td className={`px-6 py-4 text-sm font-black text-right ${f.type === 'INCOME' ? 'text-emerald-600' : 'text-slate-800'}`}>
                     {f.type === 'INCOME' ? '+' : '-'} ¥ {f.amount.toLocaleString('ja-JP')}
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="no-print px-6 py-4 text-center">
                     <button 
                       onClick={() => handleDelete(f.id)}
                       className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all md:opacity-0 group-hover:opacity-100"
-                      title="Excluir lançamento"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -242,7 +297,7 @@ const Financial: React.FC = () => {
 
       {/* Modal de Lançamento */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="no-print fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
           <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-8 overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-8">
