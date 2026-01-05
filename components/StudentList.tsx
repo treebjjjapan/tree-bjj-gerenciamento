@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { 
-  Plus, Search, Phone, Calendar, Camera, X, RefreshCw, MapPin, User as UserIcon, Mail, Instagram, Edit2, Save
+  Plus, Search, Phone, Calendar, Camera, X, RefreshCw, MapPin, User as UserIcon, Mail, Instagram, Edit2, Save, Cake
 } from 'lucide-react';
 import { useAppContext } from '../AppContext';
 import { StudentStatus, BeltColor, Student } from '../types';
@@ -93,7 +93,9 @@ const StudentList: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) return alert("Preencha ao menos Nome e Telefone");
+    if (!formData.name || !formData.phone || !formData.birthDate) {
+      return alert("Preencha Nome, Telefone e Data de Nascimento.");
+    }
     
     addStudent({
       ...formData,
@@ -168,10 +170,16 @@ const StudentList: React.FC = () => {
                 <Phone size={14} className="text-slate-400 shrink-0" />
                 <span className="text-xs text-slate-600 font-medium">{student.phone}</span>
               </div>
+              <div className="flex items-center space-x-3">
+                <Cake size={14} className="text-slate-400 shrink-0" />
+                <span className="text-xs text-slate-600 font-medium">
+                  {new Date(student.birthDate).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
               {student.address && (
                 <div className="flex items-center space-x-3">
                   <MapPin size={14} className="text-slate-400 shrink-0" />
-                  <span className="text-[11px] text-slate-500 leading-tight">{student.address}</span>
+                  <span className="text-[11px] text-slate-500 leading-tight truncate">{student.address}</span>
                 </div>
               )}
             </div>
@@ -231,9 +239,15 @@ const StudentList: React.FC = () => {
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nome Completo</label>
                     <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone (Japão)</label>
-                    <input required type="tel" placeholder="090-0000-0000" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone (Japão)</label>
+                      <input required type="tel" placeholder="090-0000-0000" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Data de Nasc.</label>
+                      <input required type="date" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} />
+                    </div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Instagram / Facebook</label>
@@ -261,10 +275,14 @@ const StudentList: React.FC = () => {
                       </select>
                     </div>
                   </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Responsável (se menor)</label>
+                    <input type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={formData.responsibleName} onChange={e => setFormData({...formData, responsibleName: e.target.value})} />
+                  </div>
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-black/20 mt-4 hover:bg-emerald-600 transition-all uppercase tracking-widest">Finalizar Matrícula</button>
+              <button type="submit" className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-black/20 mt-4 hover:bg-emerald-600 transition-all uppercase tracking-widest text-xs">Finalizar Matrícula</button>
             </form>
           </div>
         </div>
@@ -308,9 +326,15 @@ const StudentList: React.FC = () => {
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Nome Completo</label>
                     <input required type="text" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.name} onChange={e => setEditingStudent({...editingStudent, name: e.target.value})} />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone (Japão)</label>
-                    <input required type="tel" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.phone} onChange={e => setEditingStudent({...editingStudent, phone: e.target.value})} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Telefone (Japão)</label>
+                      <input required type="tel" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.phone} onChange={e => setEditingStudent({...editingStudent, phone: e.target.value})} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Data de Nasc.</label>
+                      <input required type="date" className="w-full mt-1 px-4 py-3 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-emerald-500 font-bold" value={editingStudent.birthDate} onChange={e => setEditingStudent({...editingStudent, birthDate: e.target.value})} />
+                    </div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Instagram / Facebook</label>
@@ -363,13 +387,13 @@ const StudentList: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => setEditingStudent(null)}
-                  className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+                  className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit" 
-                  className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all uppercase tracking-widest flex items-center justify-center space-x-2"
+                  className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all uppercase tracking-widest flex items-center justify-center space-x-2 text-xs"
                 >
                   <Save size={18} />
                   <span>Salvar Alterações</span>
