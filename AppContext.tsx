@@ -12,7 +12,7 @@ interface AppContextType {
   students: Student[];
   setStudents: React.Dispatch<React.SetStateAction<Student[]>>;
   addStudent: (student: Omit<Student, 'id' | 'attendanceCount' | 'graduationHistory'>) => void;
-  updateStudent: (id: string, data: Partial<Student>) => void; // Nova função
+  updateStudent: (id: string, data: Partial<Student>) => void;
   attendance: AttendanceRecord[];
   addAttendance: (studentId: string, classId?: string) => void;
   financials: FinancialRecord[];
@@ -27,6 +27,8 @@ interface AppContextType {
   setSchedules: React.Dispatch<React.SetStateAction<ClassSchedule[]>>;
   graduationRules: GraduationRule[];
   setGraduationRules: React.Dispatch<React.SetStateAction<GraduationRule[]>>;
+  importAppData: (jsonString: string) => boolean;
+  exportAppData: () => string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -109,7 +111,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStudents(prev => prev.map(s => {
       if (s.id === id) {
         const updatedStudent = { ...s, ...data };
-        // Se mudou a faixa ou graus, registramos no histórico
         if (data.belt !== undefined || data.stripes !== undefined) {
           updatedStudent.graduationHistory = [
             ...(s.graduationHistory || []),
@@ -149,6 +150,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setFinancials(prev => prev.filter(f => f.id !== id));
   }, []);
 
+  const exportAppData = () => {
+    const data = {
+      students,
+      financials,
+      attendance,
+      plans,
+      schedules,
+      graduationRules,
+      exportedAt: new Date().toISOString()
+    };
+    return JSON.stringify(data);
+  };
+
+  const importAppData = (jsonString: string) => {
+    try {
+      const data = JSON.parse(jsonString);
+      if (data.students) setStudents(data.students);
+      if (data.financials) setFinancials(data.financials);
+      if (data.attendance) setAttendance(data.attendance);
+      if (data.plans) setPlans(data.plans);
+      if (data.schedules) setSchedules(data.schedules);
+      if (data.graduationRules) setGraduationRules(data.graduationRules);
+      return true;
+    } catch (e) {
+      console.error("Erro na importação", e);
+      return false;
+    }
+  };
+
   useEffect(() => {
     const newAlerts: string[] = [];
     students.forEach(s => {
@@ -164,7 +194,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       currentUser, setCurrentUser, students, setStudents, addStudent, updateStudent,
       attendance, addAttendance, financials, setFinancials, addFinancial, deleteFinancial, products,
-      notifications, plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules
+      notifications, plans, setPlans, schedules, setSchedules, graduationRules, setGraduationRules,
+      exportAppData, importAppData
     }}>
       {children}
     </AppContext.Provider>
